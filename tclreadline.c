@@ -101,6 +101,7 @@ static void   TclReadlineLineCompleteHandler(char* ptr);
 static int    TclReadlineInitialize(Tcl_Interp* interp, char* historyfile);
 static int    blank_line(char* str);
 static char** TclReadlineCompletion(char* text, int start, int end);
+static void   TclReadlineRemoveDuplicateMatches(char** matches);
 static char*  TclReadline0generator(char* text, int state);
 static char*  TclReadlineKnownCommands(char* text, int state, int mode);
 static int    TclReadlineParse(char** args, int maxargs, char* buf);
@@ -820,7 +821,44 @@ TclReadlineCompletion(char* text, int start, int end)
         matches = rl_completion_matches(text, (rl_compentry_func_t *)TclReadline0generator);
     }
 
+    if (matches)
+        TclReadlineRemoveDuplicateMatches(matches);
+
     return matches;
+}
+
+static int
+TclReadlineCompareMatches(const void* a, const void* b)
+{
+    return strcmp(*(char* const*) a, *(char* const*) b);
+}
+
+/*
+ * remove duplicates from the matches returned by the custom or
+ * builtin completer. matches[0] is the substitution text, the
+ * actual matches are matches[1] .. matches[n-1]. GNU readline
+ * does this itself (rl_ignore_completion_duplicates), but libedit
+ * does not, which would list duplicates and break detection of a
+ * single match.
+ */
+static void
+TclReadlineRemoveDuplicateMatches(char** matches)
+{
+    int n, i, j;
+
+    for (n = 1; matches[n]; n++)
+        ;
+    if (n < 3)
+        return;
+
+    qsort(matches + 1, n - 1, sizeof(char*), TclReadlineCompareMatches);
+    for (i = 1, j = 2; j < n; j++) {
+        if (strcmp(matches[i], matches[j]))
+            matches[++i] = matches[j];
+        else
+            FREE(matches[j]);
+    }
+    matches[i + 1] = (char*) NULL;
 }
 
 static char*
