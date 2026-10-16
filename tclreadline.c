@@ -788,7 +788,9 @@ TclReadlineCompletion(char* text, int start, int end)
         if (objc) {
             int i;
             Tcl_Size length;
-            matches = (char**) MALLOC(sizeof(char*) * (objc + 1));
+            /* one extra (NULL) entry, as libedit reads matches[2] even
+             * if matches[1] is NULL */
+            matches = (char**) calloc(objc + 2, sizeof(char*));
             for (i = 0; i < objc; i++) {
                 matches[i] = strdup(Tcl_GetStringFromObj(objv[i], &length));
                 if (1 == objc && !strlen(matches[i])) {
