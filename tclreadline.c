@@ -848,6 +848,15 @@ TclReadlineKnownCommands(char* text, int state, int mode)
 
         case _CMD_SET:
 
+            tmp = strdup(text);
+            argc = TclReadlineParse(args, sizeof(args) / sizeof(args[0]), tmp);
+
+            /* an entry without words would crash the completer */
+            if (!argc) {
+                FREE(tmp);
+                return (char*) NULL;
+            }
+
             new = (cmds_t *) MALLOC(sizeof(cmds_t));
             new->next = (cmds_t *) NULL;
 
@@ -858,9 +867,6 @@ TclReadlineKnownCommands(char* text, int state, int mode)
                 cmds->prev->next = new;
                 cmds->prev = new;
             }
-
-            tmp = strdup(text);
-            argc = TclReadlineParse(args, sizeof(args) / sizeof(args[0]), tmp);
 
             new->cmd = (char**) MALLOC(sizeof(char*) * (argc + 1));
 
