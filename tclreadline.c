@@ -878,6 +878,7 @@ TclReadlineKnownCommands(char* text, int state, int mode)
     char* args[256];
     int i, argc;
     char** name;
+    cmds_t* c;
 
     char* local_line = (char*) NULL;
     int sub;
@@ -886,6 +887,21 @@ TclReadlineKnownCommands(char* text, int state, int mode)
     switch (mode) {
 
         case _CMD_SET:
+
+            tmp = strdup(text);
+            argc = TclReadlineParse(args, sizeof(args), tmp);
+
+            /* ignore a line which has already been added */
+            for (c = cmds; c; c = c->next) {
+                for (i = 0; i < argc && c->cmd[i]; i++) {
+                    if (strcmp(c->cmd[i], args[i]))
+                        break;
+                }
+                if (i == argc && !c->cmd[i]) {
+                    FREE(tmp);
+                    return (char*) NULL;
+                }
+            }
 
             new = (cmds_t *) MALLOC(sizeof(cmds_t));
             new->next = (cmds_t *) NULL;
@@ -897,9 +913,6 @@ TclReadlineKnownCommands(char* text, int state, int mode)
                 cmds->prev->next = new;
                 cmds->prev = new;
             }
-
-            tmp = strdup(text);
-            argc = TclReadlineParse(args, sizeof(args), tmp);
 
             new->cmd = (char**) MALLOC(sizeof(char*) * (argc + 1));
 
