@@ -859,7 +859,7 @@ TclReadlineKnownCommands(char* text, int state, int mode)
             }
 
             tmp = strdup(text);
-            argc = TclReadlineParse(args, sizeof(args), tmp);
+            argc = TclReadlineParse(args, sizeof(args) / sizeof(args[0]), tmp);
 
             new->cmd = (char**) MALLOC(sizeof(char*) * (argc + 1));
 
@@ -876,7 +876,7 @@ TclReadlineKnownCommands(char* text, int state, int mode)
         case _CMD_GET:
 
             local_line = strdup(rl_line_buffer);
-            sub = TclReadlineParse(args, sizeof(args), local_line);
+            sub = TclReadlineParse(args, sizeof(args) / sizeof(args[0]), local_line);
 
             if (0 == sub || (1 == sub && '\0' != text[0])) {
                 if (!state) {
